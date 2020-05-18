@@ -358,16 +358,16 @@ def parse_argument():
         '--data_type', '-d',
         dest="data_type",
         default='singing',
-        help='Data type. \nOptions: "singing"(Default)|"speech"|"piano"|"violin"',
+        help='Data type. Options: "singing"(Default)|"speech"|"piano"|"violin"',
     )
 
     parser.add_argument(
         '--arch_type', '-a',
         dest="arch_type",
         default='hc',
-        help='Architecture type.\nOptions: \
-        "nh" for non-hierarchical, available to "singing"|\
-        "h" for hierarchical, available to "singing", "speech"|\
+        help='Architecture type. Options: \
+        "nh" for non-hierarchical, available to singing|\
+        "h" for hierarchical, available to singing and speech|\
         "hc" (Default) for hierarchical with cycle, available to all',
     )
 

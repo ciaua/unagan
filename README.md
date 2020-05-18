@@ -1,6 +1,12 @@
 Unconditional Audio Generation with GAN and Cycle Regularization
 ================================================================
 
+This repository contains the code and samples for our paper "Unconditional Audio Generation with GAN and Cycle Regularization". The goal is to unconditionally generate singing voices, speech, and instrument sounds with GAN.
+
+
+## Paper
+TBA
+
 ## Install requirements
 ```
 pip install -r requirements.txt
