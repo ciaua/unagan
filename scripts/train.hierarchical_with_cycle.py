@@ -3,15 +3,15 @@
 import os
 gid = 0
 os.environ['CUDA_VISIBLE_DEVICES'] = str(gid)
-# from itertools import chain
 
 import time
 import pickle
 import random
 from collections import OrderedDict
-# import numpy as np
 
-from training_manager.manager import TrainingManager, get_current_time
+import sys
+sys.path.append('..')
+from src.training_manager import TrainingManager, get_current_time
 
 import numpy as np
 
@@ -24,13 +24,6 @@ from torch.nn.utils import clip_grad_norm_
 from torch.nn.utils import spectral_norm
 
 torch.multiprocessing.set_sharing_strategy('file_system')
-
-
-'''
-References
-https://github.com/Natsu6767/InfoGAN-PyTorch/blob/master/train.py
-https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/began/began.py
-'''
 
 
 class VocDataset(Dataset):
@@ -199,7 +192,6 @@ class BEGANRecorder(nn.Module):
 class RCBlock(nn.Module):
     def __init__(self, feat_dim, ks, dilation, num_groups):
         super().__init__()
-        # ks = 3  # kernel size
         ksm1 = ks-1
         mfd = feat_dim
         di = dilation
@@ -236,7 +228,7 @@ class BodyGBlock(nn.Module):
     def __init__(self, input_dim, output_dim, middle_dim, num_groups):
         super().__init__()
 
-        ks = 3  # filter size
+        ks = 3  # kernel size
         mfd = middle_dim
 
         self.input_dim = input_dim
@@ -251,8 +243,6 @@ class BodyGBlock(nn.Module):
             nn.LeakyReLU(),
             RCBlock(mfd, ks, dilation=1, num_groups=num_groups),
             nn.Conv1d(mfd, output_dim, 3, 1, 1),
-            # nn.GroupNorm(num_groups, output_dim),
-            # nn.LeakyReLU(),
         ]
         self.block = nn.Sequential(*block)
 
@@ -268,7 +258,6 @@ class NetG(nn.Module):
     def __init__(self, feat_dim, z_dim, z_scale_factors):
         super().__init__()
 
-        # ks = 3  # filter size
         mfd = 512
         num_groups = 4
         self.num_groups = num_groups
@@ -294,35 +283,20 @@ class NetG(nn.Module):
         self.blocks = nn.ModuleList(blocks)
         self.heads = nn.ModuleList(heads)
 
-        # ### Head ###
-        # self.head = nn.Conv1d(mfd, feat_dim, 3, 1, 1)
-
     def forward(self, z):
 
         # SBlock0
         z_scale_factors = self.z_scale_factors
-        # nf = min(z.size(2), cond_.size(2))
-        # zc = torch.cat([z[:, :, :nf], cond_[:, :, :nf]], dim=1)
         x_body = self.block0(z)
         x_head = self.head0(x_body)
 
-        # print(len(self.blocks))
         for ii, (block, head, scale_factor) in enumerate(zip(self.blocks, self.heads, z_scale_factors)):
             x_body = F.interpolate(x_body, scale_factor=scale_factor, mode='nearest')
             x_head = F.interpolate(x_head, scale_factor=scale_factor, mode='nearest')
 
-            # print(total_scale_factor, x.shape, cond_.shape)
-            # nf = min(x.size(2), cond_.size(2))
-            # c = torch.cat([x[:, :, :nf], cond_[:, :, :nf]], dim=1)
-
             x_body = x_body + block(x_body)
 
             x_head = x_head + head(x_body)
-
-        # Head
-        # shape=(bs, feat_dim, nf)
-        # x = torch.sigmoid(self.head(x))
-        # x = torch.sigmoid(x)
 
         return x_head
 
@@ -412,7 +386,7 @@ class NetD(nn.Module):
     def __init__(self, input_size):
         super().__init__()
 
-        ks = 3  # filter size
+        ks = 3  # kernel size
         mfd = 512
 
         self.mfd = mfd
@@ -473,7 +447,7 @@ class Encoder(nn.Module):
     def __init__(self, input_size, z_dim, z_scale_factors):
         super().__init__()
 
-        ks = 3  # filter size
+        ks = 3  # kernel size
         mfd = 512
 
         self.mfd = mfd
@@ -539,10 +513,9 @@ if __name__ == '__main__':
     print(script_path)
 
     # Options
-    base_dir = "/storage/ciaua/Data/ai_singing/free_singer.female/"
-    base_out_dir = base_dir
+    base_out_dir = "checkpoints/"
 
-    data_dir = f'/storage/ciaua/Data/ai_vocal/data/exp_data.female.paired_voc_acc/'
+    data_dir = 'data/exp_data'
 
     feat_dim = 80
     z_dim = 20
@@ -552,7 +525,7 @@ if __name__ == '__main__':
 
     num_va = 200
 
-    feat_type = 'mel.melgan'
+    feat_type = 'mel'
 
     loss_funcs = OrderedDict([
         ('G', None),
@@ -579,21 +552,19 @@ if __name__ == '__main__':
 
     # Training options
     init_lr = 0.0001
-    num_epochs = 500
+    num_epochs = 200
     batches_per_epoch = 500
 
     lambda_cycle = 1
 
     max_grad_norm = 3
 
-    # torch.cuda.set_device(gid)
-
     save_rate = 10
 
     batch_size = 5
 
     # Dirs and fps
-    save_dir = os.path.join(base_out_dir, 'save.cycle')
+    save_dir = os.path.join(base_out_dir, 'save')
     output_dir = os.path.join(save_dir, model_id)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -605,8 +576,8 @@ if __name__ == '__main__':
     inf_iterator_tr = make_inf_iterator(iterator_tr)
 
     # Prepare mean and std
-    mean_fp = os.path.join(data_dir, f'mean.{feat_type}.vocals.npy')
-    std_fp = os.path.join(data_dir, f'std.{feat_type}.vocals.npy')
+    mean_fp = os.path.join(data_dir, f'mean.{feat_type}.npy')
+    std_fp = os.path.join(data_dir, f'std.{feat_type}.npy')
 
     mean = torch.from_numpy(np.load(mean_fp)).float().cuda().view(1, feat_dim, 1)
     std = torch.from_numpy(np.load(std_fp)).float().cuda().view(1, feat_dim, 1)
@@ -616,13 +587,6 @@ if __name__ == '__main__':
     netD = NetD(feat_dim).cuda()
     netE = Encoder(feat_dim, z_dim, z_scale_factors).cuda()
     recorder = BEGANRecorder(lambda_k, init_k, gamma)
-
-    # l1 = nn.L1Loss().cuda()
-    # mse = nn.MSELoss().cuda()
-    # ce = nn.CrossEntropyLoss(reduction='none').cuda()
-    # bce = nn.BCELoss().cuda()
-
-    # normalnll = NormalNLLLoss()
 
     # Optimizers
     optimizerG = optim.Adam(netG.parameters(), lr=init_lr)
@@ -635,7 +599,7 @@ if __name__ == '__main__':
     manager = TrainingManager(
         [netG, netD, netE, recorder],  # networks
         [optimizerG, optimizerD, optimizerE, None],  # optimizers, could be None
-        ['Singer', 'Discriminator', 'Encoder', 'BEGANRecorder'],  # names of the corresponding networks
+        ['Generator', 'Discriminator', 'Encoder', 'BEGANRecorder'],  # names of the corresponding networks
         output_dir, save_rate, script_path=script_path)
     # ###################################
 
@@ -662,7 +626,6 @@ if __name__ == '__main__':
 
         count_all_tr = 0
 
-        # num_batches_tr = len(iterator_tr)
         num_batches_tr = batches_per_epoch
 
         tt0 = time.time()
@@ -671,7 +634,6 @@ if __name__ == '__main__':
         netG.train()
         netD.train()
         netE.train()
-        # for i_batch, batch in zip(range(batches_per_epoch), inf_iterator_tr):
         for i_batch in range(batches_per_epoch):
             batch = next(inf_iterator_tr)
 

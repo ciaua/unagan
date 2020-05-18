@@ -3,34 +3,26 @@
 import os
 gid = 0
 os.environ['CUDA_VISIBLE_DEVICES'] = str(gid)
-# from itertools import chain
 
 import time
 import pickle
 import random
 from collections import OrderedDict
-# import numpy as np
 
-from training_manager.manager import TrainingManager, get_current_time
+import sys
+sys.path.append('..')
+from src.training_manager import TrainingManager, get_current_time
 
 import numpy as np
 
 import torch
 import torch.nn as nn
-# import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils import clip_grad_norm_
 from torch.nn.utils import spectral_norm
 
 torch.multiprocessing.set_sharing_strategy('file_system')
-
-
-'''
-References
-https://github.com/Natsu6767/InfoGAN-PyTorch/blob/master/train.py
-https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/began/began.py
-'''
 
 
 class VocDataset(Dataset):
@@ -45,25 +37,6 @@ class VocDataset(Dataset):
         voc = np.load(voc_fp)
 
         return voc
-
-    def __len__(self):
-        return len(self.metadata)
-
-
-class VocAccDataset(Dataset):
-    def __init__(self, ids, path):
-        self.metadata = ids
-        self.path = path
-
-    def __getitem__(self, index):
-        id = self.metadata[index]
-        voc_fp = os.path.join(self.path, id, 'vocals.npy')
-        acc_fp = os.path.join(self.path, id, 'accompaniment.npy')
-
-        voc = np.load(voc_fp)
-        acc = np.load(acc_fp)
-
-        return voc, acc
 
     def __len__(self):
         return len(self.metadata)
@@ -86,45 +59,6 @@ def get_voc_datasets(path, feat_type, batch_size, va_samples):
 
     tr_dataset = VocDataset(tr_ids, in_dir)
     va_dataset = VocDataset(va_ids, in_dir)
-    num_tr = len(tr_dataset)
-    num_va = len(va_dataset)
-
-    iterator_tr = DataLoader(
-        tr_dataset,
-        batch_size=batch_size,
-        num_workers=5,
-        shuffle=True,
-        drop_last=True,
-        pin_memory=True)
-
-    iterator_va = DataLoader(
-        va_dataset,
-        batch_size=batch_size,
-        num_workers=0,
-        shuffle=False,
-        drop_last=True,
-        pin_memory=True)
-
-    return iterator_tr, num_tr, iterator_va, num_va
-
-
-def get_vocacc_datasets(path, feat_type, batch_size, va_samples):
-
-    dataset_fp = os.path.join(path, 'dataset.pkl')
-    in_dir = os.path.join(path, feat_type)
-    with open(dataset_fp, 'rb') as f:
-        dataset = pickle.load(f)
-
-    dataset_ids = [x[0] for x in dataset]
-
-    random.seed(1234)
-    random.shuffle(dataset_ids)
-
-    va_ids = dataset_ids[-va_samples:]
-    tr_ids = dataset_ids[:-va_samples]
-
-    tr_dataset = VocAccDataset(tr_ids, in_dir)
-    va_dataset = VocAccDataset(va_ids, in_dir)
     num_tr = len(tr_dataset)
     num_va = len(va_dataset)
 
@@ -249,7 +183,6 @@ class BEGANRecorder(nn.Module):
 class RCBlock(nn.Module):
     def __init__(self, feat_dim, ks, dilation, num_groups):
         super().__init__()
-        # ks = 3  # kernel size
         ksm1 = ks-1
         mfd = feat_dim
         di = dilation
@@ -286,7 +219,7 @@ class NetG(nn.Module):
     def __init__(self, feat_dim, z_dim):
         super().__init__()
 
-        ks = 3  # filter size
+        ks = 3  # kernel size
         mfd = 512
         num_groups = 4
         self.num_groups = num_groups
@@ -381,7 +314,7 @@ class NetD(nn.Module):
     def __init__(self, input_size):
         super().__init__()
 
-        ks = 3  # filter size
+        ks = 3  # kernel size
         mfd = 512
 
         self.mfd = mfd
@@ -429,7 +362,6 @@ class NetD(nn.Module):
 
         # ### Head ###
         # shape=(bs, input_size, nf)
-        # out = torch.sigmoid(self.head(x))
         out = self.head(x)
 
         return out
@@ -449,17 +381,15 @@ if __name__ == '__main__':
     print(script_path)
 
     # Options
-    base_dir = "/storage/ciaua/Data/ai_singing/free_singer.female/"
-    base_out_dir = base_dir
-
-    data_dir = f'/storage/ciaua/Data/ai_vocal/data/exp_data.female.paired_voc_acc/'
+    base_out_dir = 'checkpoints/'
+    data_dir = 'data/exp_data/'
 
     feat_dim = 80
     z_dim = 20
 
     num_va = 200
 
-    feat_type = 'mel.melgan'
+    feat_type = 'mel'
 
     loss_funcs = OrderedDict([
         ('G', None),
@@ -489,10 +419,7 @@ if __name__ == '__main__':
 
     max_grad_norm = 3
 
-    # torch.cuda.set_device(gid)
-
     save_rate = 10
-
     batch_size = 5
 
     # Dirs and fps
@@ -508,8 +435,8 @@ if __name__ == '__main__':
     inf_iterator_tr = make_inf_iterator(iterator_tr)
 
     # Prepare mean and std
-    mean_fp = os.path.join(data_dir, f'mean.{feat_type}.vocals.npy')
-    std_fp = os.path.join(data_dir, f'std.{feat_type}.vocals.npy')
+    mean_fp = os.path.join(data_dir, f'mean.{feat_type}.npy')
+    std_fp = os.path.join(data_dir, f'std.{feat_type}.npy')
 
     mean = torch.from_numpy(np.load(mean_fp)).float().cuda().view(1, feat_dim, 1)
     std = torch.from_numpy(np.load(std_fp)).float().cuda().view(1, feat_dim, 1)
@@ -518,13 +445,6 @@ if __name__ == '__main__':
     netG = NetG(feat_dim, z_dim).cuda()
     netD = NetD(feat_dim).cuda()
     recorder = BEGANRecorder(lambda_k, init_k, gamma)
-
-    # l1 = nn.L1Loss().cuda()
-    # mse = nn.MSELoss().cuda()
-    # ce = nn.CrossEntropyLoss(reduction='none').cuda()
-    # bce = nn.BCELoss().cuda()
-
-    # normalnll = NormalNLLLoss()
 
     # Optimizers
     optimizerG = optim.Adam(netG.parameters(), lr=init_lr)
@@ -536,7 +456,7 @@ if __name__ == '__main__':
     manager = TrainingManager(
         [netG, netD, recorder],  # networks
         [optimizerG, optimizerD, None],  # optimizers, could be None
-        ['Singer', 'Discriminator', 'BEGANRecorder'],  # names of the corresponding networks
+        ['Generator', 'Discriminator', 'BEGANRecorder'],  # names of the corresponding networks
         output_dir, save_rate, script_path=script_path)
     # ###################################
 
@@ -562,7 +482,6 @@ if __name__ == '__main__':
 
         count_all_tr = 0
 
-        # num_batches_tr = len(iterator_tr)
         num_batches_tr = batches_per_epoch
 
         tt0 = time.time()
@@ -570,7 +489,6 @@ if __name__ == '__main__':
         # In training, set net.train()
         netG.train()
         netD.train()
-        # for i_batch, batch in zip(range(batches_per_epoch), inf_iterator_tr):
         for i_batch in range(batches_per_epoch):
             batch = next(inf_iterator_tr)
 

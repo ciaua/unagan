@@ -1,11 +1,6 @@
 import os
 import argparse
 
-# gid = 0
-# gid = None
-# os.environ['CUDA_VISIBLE_DEVICES'] = str(gid)
-# import math
-
 import yaml
 import librosa
 import sys
@@ -13,7 +8,7 @@ import numpy as np
 
 from pydub import AudioSegment
 
-from training_manager import manager
+import src.training_manager as manager
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -242,8 +237,11 @@ def main(args):
     mean_fp = f'models/{data_type}/mean.mel.npy'
     std_fp = f'models/{data_type}/std.mel.npy'
 
-    mean = torch.from_numpy(np.load(mean_fp)).float().cuda().view(1, feat_dim, 1)
-    std = torch.from_numpy(np.load(std_fp)).float().cuda().view(1, feat_dim, 1)
+    mean = torch.from_numpy(np.load(mean_fp)).float().view(1, feat_dim, 1)
+    std = torch.from_numpy(np.load(std_fp)).float().view(1, feat_dim, 1)
+    if gid >= 0:
+        mean = mean.cuda(gid)
+        std = std.cuda(gid)
 
     # ### Vocoder info ###
     vocoder_dir = f'models/{data_type}/vocoder/'
@@ -275,8 +273,8 @@ def main(args):
 
     manager.load_model(param_fp, generator, device_id='cpu')
 
-    if gid is not None:
-        generator = generator.cuda()
+    if gid >= 0:
+        generator = generator.cuda(gid)
 
     # ### Vocoder ###
     vocoder_model_dir = f'models/{data_type}/vocoder/'
@@ -293,8 +291,8 @@ def main(args):
     vocoder_param_fp = os.path.join(vocoder_model_dir, 'params.pt')
     vocoder.load_state_dict(torch.load(vocoder_param_fp))
 
-    if gid is not None:
-        vocoder = vocoder.cuda()
+    if gid >= 0:
+        vocoder = vocoder.cuda(gid)
 
     # ### Process ###
     torch.manual_seed(seed)
@@ -308,18 +306,18 @@ def main(args):
         elif arch_type.startswith('hierarchical'):
             z = torch.zeros((1, z_dim, int(np.ceil(num_frames / z_total_scale_factor)))).normal_(0, 1).float()
 
-        if gid is not None:
-            z = z.cuda()
+        if gid >= 0:
+            z = z.cuda(gid)
 
         with torch.set_grad_enabled(False):
-            # Singer
-            # shape=(1, num_mels, num_frames)
-            melspec_voc = generator(z)
-            melspec_voc = (melspec_voc * std) + mean
+            with torch.cuda.device(gid):
+                # Generator
+                melspec_voc = generator(z)
+                melspec_voc = (melspec_voc * std) + mean
 
-            # Vocoder
-            audio = vocoder(melspec_voc)
-            audio = audio.squeeze().cpu().numpy()
+                # Vocoder
+                audio = vocoder(melspec_voc)
+                audio = audio.squeeze().cpu().numpy()
 
         # Save to wav
         librosa.output.write_wav(out_fp_wav, audio, sr=sr)
@@ -397,8 +395,9 @@ def parse_argument():
     parser.add_argument(
         '--gid',
         dest='gid',
-        default='cpu',
-        help='GPU id. Default: "cpu"'
+        default=-1,
+        type=int,
+        help='GPU id. Default: -1 for using cpu'
     )
 
     parser.add_argument(

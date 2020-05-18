@@ -1,2 +1,2 @@
-wget https://www.dropbox.com/s/e73ijlj7xd4gx6m/models.zip
+wget https://www.dropbox.com/s/sz8flqb9v4d7edz/models.zip
 unzip models.zip
