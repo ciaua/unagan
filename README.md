@@ -3,11 +3,12 @@ Unconditional Audio Generation with GAN and Cycle Regularization
 
 This repository contains the code and samples for our paper "Unconditional Audio Generation with GAN and Cycle Regularization". The goal is to unconditionally generate singing voices, speech, and instrument sounds with GAN.
 
+The model is implemented with PyTorch. 
 
 ## Paper
 TBA
 
-## Install requirements
+## Install dependencies
 ```
 pip install -r requirements.txt
 ```
@@ -16,6 +17,8 @@ pip install -r requirements.txt
 
 The pretrained parameters can be downloaded here: 
 [Pretrained parameters](https://www.dropbox.com/s/sz8flqb9v4d7edz/models.zip)
+
+Unzip it so that the `models` folder is in the current folder.
 
 
 Or use the following script
