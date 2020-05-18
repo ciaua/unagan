@@ -33,13 +33,13 @@ python generate.py
 
 ## Vocoder
 
-https://github.com/descriptinc/melgan-neurips
+We use [MelGAN](https://github.com/descriptinc/melgan-neurips) as the vocoder. The trained vocoders are included in the `models.zip`
 
-
-For singing, piano, and violin, we have modify the MelGAN to include GRU in the vocoder architecture. We have found that this modification yields improved audio quality.
+For singing, piano, and violin, we have modify the MelGAN to include GRU in the vocoder architecture. We have found that this modification yields improved audio quality. For speech, we directly use the trained LJ vocoder from [MelGAN](https://github.com/descriptinc/melgan-neurips/blob/master/models).
 
 ## Audio samples
 
+Some generated audio samples can be found in:
 ```
 samples/
 ```
