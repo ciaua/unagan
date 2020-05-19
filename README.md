@@ -6,7 +6,7 @@ This repository contains the code and samples for our paper "Unconditional Audio
 The model is implemented with PyTorch. 
 
 ## Paper
-TBA
+[arXiv](https://arxiv.org/abs/2005.08526)
 
 ## Install dependencies
 ```
