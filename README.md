@@ -27,8 +27,32 @@ bash download_and_unzip_models.sh
 ```
 
 ## Usage
+Display the options
+```
+python generate.py -h
+```
+
+### Generate singing voices
+The following commands are equivalent.
 ```
 python generate.py
+python generate.py -data_type singing -arch_type hc --duration 10 --num_samples 5
+python generate.py -d singing -a hc --duration 10 -ns 5
+```
+
+### Generate speech
+```
+python generate.py -d speech
+```
+
+### Generate piano sounds
+```
+python generate.py -d piano
+```
+
+### Generate violin sounds
+```
+python generate.py -d violin
 ```
 
 ## Vocoder
