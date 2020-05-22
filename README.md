@@ -61,6 +61,19 @@ We use [MelGAN](https://github.com/descriptinc/melgan-neurips) as the vocoder. T
 
 For singing, piano, and violin, we have modify the MelGAN to include GRU in the vocoder architecture. We have found that this modification yields improved audio quality. For speech, we directly use the trained LJ vocoder from [MelGAN](https://github.com/descriptinc/melgan-neurips/blob/master/models).
 
+
+# Train your own model
+
+One may use the following steps to train their own models.
+
+0. (Singing only) Separate singing voices from the audios you collect
+We use a separation model we developed. However, you can also use open-sourced ones such as [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch) or [Spleeter](https://github.com/deezer/spleeter).
+
+1. scripts/collect_audio_clips.py
+2. scripts/extract_mel.py
+3. scripts/make_dataset.py
+4. scripts/compute_mean_std.mel.py
+
 ## Audio samples
 
 Some generated audio samples can be found in:

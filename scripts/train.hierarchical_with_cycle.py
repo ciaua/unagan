@@ -513,9 +513,9 @@ if __name__ == '__main__':
     print(script_path)
 
     # Options
-    base_out_dir = "checkpoints/"
+    base_out_dir = "./checkpoints/"
 
-    data_dir = 'data/exp_data'
+    data_dir = './training_data/exp_data'
 
     feat_dim = 80
     z_dim = 20
