@@ -6,7 +6,7 @@ This repository contains the code and samples for our paper "Unconditional Audio
 The model is implemented with PyTorch. 
 
 ## Paper
-[arXiv](https://arxiv.org/abs/2005.08526)
+[Unconditional Audio Generation with GAN and Cycle Regularization](https://arxiv.org/abs/2005.08526)
 
 ## Install dependencies
 ```
@@ -66,7 +66,7 @@ For singing, piano, and violin, we have modify the MelGAN to include GRU in the 
 
 One may use the following steps to train their own models.
 
-0. (Singing only) Separate singing voices from the audios you collect
+0. (Singing only) Separate singing voices from the audios you collect.
 We use a separation model we developed. You can use open-sourced ones such as [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch) or [Spleeter](https://github.com/deezer/spleeter).
 
 1. `scripts/collect_audio_clips.py`
@@ -76,7 +76,7 @@ We use a separation model we developed. You can use open-sourced ones such as [O
 
 5. `scripts/train.*.py`
 
-## Audio samples
+# Audio samples
 
 Some generated audio samples can be found in:
 ```
