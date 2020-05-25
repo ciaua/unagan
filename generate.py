@@ -328,7 +328,7 @@ def main(args):
 
 
 def parse_argument():
-    parser = argparse.ArgumentParser(description='piano trnascription')
+    parser = argparse.ArgumentParser(description='Uncondtional Singing Voice Generation')
 
     parser.add_argument(
         '--data_type', '-d',
