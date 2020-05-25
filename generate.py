@@ -328,30 +328,6 @@ def main(args):
 
 
 def parse_argument():
-    '''
-    audio_path: str
-        path to the audio file
-
-    output_path:
-        path to the output file
-        If None, the the name of the audio file is used and the extension is replaced with .mid
-
-    parameter_path: dict or str
-        If a str is given, all the predictions are from the same parameters
-
-        If a dict is given, the dict should contain two keys: 'onset' and 'frame'.
-        parameter_path['onset'] is the path to the parameter for onset and velocity
-        parameter_path['frame'] is the path to the parameter for frame
-
-    onset_threshold: float
-        threshold for the onset prediction
-
-    frame_threshold: float
-        threshold for the frame prediction
-
-    gpu_id: int or None
-        if None, cpu is used
-    '''
     parser = argparse.ArgumentParser(description='piano trnascription')
 
     parser.add_argument(
