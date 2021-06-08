@@ -76,6 +76,12 @@ We use a separation model we developed. You can use open-sourced ones such as [O
 
 5. `scripts/train.*.py`
 
+
+## Generation with custom models
+
+You can replace the path in the `param_fp` variable in `generate.py` with either `params.Generator.best_Convergence.torch` or `params.Generator.latest.torch` in the folder of the trained model. Files with extensions .torch and .pt are both saved parameters.
+
+
 ## Audio samples
 
 Some generated audio samples can be found in:

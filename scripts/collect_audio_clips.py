@@ -9,7 +9,7 @@ from multiprocessing import Pool
 def process_one(args):
     fn, out_dir = args
 
-    in_fp = os.path.join(audio_dir, f'{fn}.wav')
+    in_fp = os.path.join(audio_dir, f'{fn}{ext}')
     if not os.path.exists(in_fp):
         print('Not exists')
         return
