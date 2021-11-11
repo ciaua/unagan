@@ -87,7 +87,11 @@ def process_audios(path):
     out_dir = os.path.join(base_out_dir, feat_type)
     os.makedirs(out_dir, exist_ok=True)
 
+
+    out_dir2 = os.path.join(out_dir, id)
+    os.makedirs(out_dir2, exist_ok=True)
     out_fp = os.path.join(out_dir, f'{id}.npy')
+    vocal_out_fp = os.path.join(out_dir2, f'vocals.npy')
 
     if os.path.exists(out_fp):
         print('Done before')
@@ -95,8 +99,9 @@ def process_audios(path):
 
     try:
         m = convert_file(path)
-
+        np.save(vocal_out_fp, m, allow_pickle=False)
         np.save(out_fp, m, allow_pickle=False)
+
     except Exception:
         return id, 0
     return id, m.shape[-1]
